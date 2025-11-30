@@ -5,11 +5,12 @@ USE concert_db;
 
 CREATE TABLE users (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
-  name_surname VARCHAR(100),
+  username VARCHAR(100),
   email VARCHAR(50),
   password VARCHAR(255),
-  role VARCHAR(15),
+  role VARCHAR(15), --DEFAULT "attendee"
   status VARCHAR(15),
+  -- organizer_request ENUM('none','pending','approved','rejected') DEFAULT 'none',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
