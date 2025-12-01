@@ -10,7 +10,7 @@ CREATE TABLE users (
   password VARCHAR(255),
   role VARCHAR(15), --DEFAULT "attendee"
   status VARCHAR(15),
-  -- organizer_request ENUM('none','pending','approved','rejected') DEFAULT 'none',
+  organizer_request ENUM('none','pending','approved','rejected') DEFAULT 'none',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
