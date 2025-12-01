@@ -24,7 +24,7 @@ $stmt->store_result();
             $_SESSION["role"] = $role;
             
             if ($role === "admin") {
-            header("Location: admin_home.php");
+            header("Location: admin_home.php"); //pathi sonra değiş
             exit;
             }
         
