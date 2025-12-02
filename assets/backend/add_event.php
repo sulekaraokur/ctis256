@@ -8,13 +8,13 @@ if ($_SERVER['REQUEST_METHOD']=='POST'){
         exit;
     }
 
-    $servername = "localhost";
+    $dsn = "localhost";
     $username = "std";
     $password = "";
     $dbname = "db";
 
     try{
-        $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+        $pdo = new PDO("mysql:host=$dsn;dbname=$dbname", $username, $password);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $sql = 'INSERT INTO events(title, artist_name, `desc`, date, location, status, created_at, updated_at)
