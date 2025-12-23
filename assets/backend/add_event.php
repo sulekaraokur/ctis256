@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD']=='POST'){
         exit;
     }
 
-    $dsn = "localhost";
+    $dsn = "localhost";//commitle!!
     $username = "std";
     $password = "";
     $dbname = "db";
