@@ -5,7 +5,6 @@ error_reporting(E_ALL);
 
 require_once "../includes/db.php";
 
-// Şimdilik sabit organizer id (login sonrası session'dan alınacak)
 $organizer_id = 1;
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
