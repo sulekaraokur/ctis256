@@ -1,3 +1,9 @@
+<?php
+session_start();
+include "assets/includes/db.php";
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -49,6 +55,18 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
+          <?php if (!isset($_SESSION['user_id'])): ?>
+        <li><a href="assets/auth/login.php">Login</a></li>
+          <li><a href="assets/auth/register.php">Register</a></li>
+          <?php else: ?>
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+        <li><a href="admin/dashboard.php">Admin Panel</a></li>
+        <?php elseif ($_SESSION['role'] === 'organizer'): ?>
+        <li><a href="organizer/dashboard.php">Organizer Panel</a></li>
+      <?php endif; ?>
+       <li><a href="assets/auth/logout.php">Logout</a></li>
+        <?php endif; ?>
+
           <li><a href="#hero" class="active">Home<br></a></li>
           <li><a href="#speakers">Speakers</a></li>
           <li><a href="#schedule">Schedule</a></li>
