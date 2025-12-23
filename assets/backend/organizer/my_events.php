@@ -5,18 +5,16 @@ error_reporting(E_ALL);
 
 require_once "../includes/db.php";
 
-/* ŞİMDİLİK SABİT ORGANIZER
-   (login gelince $_SESSION['user_id'] olacak) */
+
 $organizer_id = 1;
 
-/* ---------------- FILTER ---------------- */
+
 $status = $_GET['status'] ?? 'all';
 $allowed = ['all','pending','approved','rejected'];
 if (!in_array($status, $allowed, true)) {
     $status = 'all';
 }
 
-/* ---------------- COUNTS ---------------- */
 $countSql = "
     SELECT LOWER(TRIM(status)) AS s, COUNT(*) AS c
     FROM events
