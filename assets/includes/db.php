@@ -1,11 +1,16 @@
 <?php
 $host = "localhost";
+$dbname = "concert_db";
 $user = "root";
 $pass = "";
-$dbname = "concert_db";
 
-$conn = new mysqli($host, $user, $pass, $dbname);
-
-if ($conn->connect_error) {
-    die("connection error: " . $conn->connect_error);
+try {
+    $pdo = new PDO(
+        "mysql:host=$host;dbname=$dbname;charset=utf8",
+        $user,
+        $pass
+    );
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("DB ERROR: " . $e->getMessage());
 }
