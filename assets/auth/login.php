@@ -22,14 +22,16 @@ $stmt->store_result();
         if (password_verify($password, $hashed)) {
             $_SESSION["user_id"] = $id;
             $_SESSION["role"] = $role;
+            $_SESSION["username"] = $username;
+
             
             if ($role === "admin") {
-            header("Location: ../admin/dashboard.php"); 
+            header("Location: ../../index.php"); 
             exit;
             }
         
             if ($role === "organizer") {
-                header("Location: ../organizer/dashboard.php");
+                header("Location: ../../indexd.php");
                 exit;
             }
 
