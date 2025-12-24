@@ -100,7 +100,7 @@ else{
       </div>
 
       <div class="mb-3">
-        <input type="password" name="password" class="form-control"
+        <input type="text" name="password" class="form-control"
        placeholder="Password (min 8 chars, A–z, 0–9)"
        
        required>
@@ -108,7 +108,7 @@ else{
       </div>
 
       <div class="mb-3">
-        <input type="password" name="confirm" class="form-control"
+        <input type="text" name="confirm" class="form-control"
                placeholder="Confirm Password" required>
       </div>
 

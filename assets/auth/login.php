@@ -91,7 +91,18 @@ $stmt->store_result();
       <?php endif; ?>
 
     </form>
+    <p class="text-center mt-3">
+  Don’t have an account?
+  <a href="register.php" >
+    Register
+  </a>
+</p>
+
+
+
+
   </div>
+  
 </section>
 
 </body>
