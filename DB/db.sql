@@ -5,11 +5,11 @@ USE concert_db;
 
 CREATE TABLE users (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100),
-  email VARCHAR(50),
+  username VARCHAR(100) NOT NULL, /*email ve bunu değiştirdim*/
+  email VARCHAR(50) UNIQUE NOT NULL, 
   password VARCHAR(255),
-  role VARCHAR(15), --DEFAULT "attendee"
-  status VARCHAR(15),
+   role ENUM('admin','organizer','user') DEFAULT 'user', /*VARCHAR(15), --DEFAULT "user"*/
+   status VARCHAR(15),
   organizer_request ENUM('none','pending','approved','rejected') DEFAULT 'none',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -35,6 +35,7 @@ CREATE TABLE registrations (
   user_id INT,
   event_id INT,
   reg_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE (user_id, event_id), /*değişiklik*/
   FOREIGN KEY (user_id) REFERENCES users(user_id),
   FOREIGN KEY (event_id) REFERENCES events(event_id)
 );
