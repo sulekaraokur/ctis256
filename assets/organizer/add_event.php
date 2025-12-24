@@ -48,9 +48,17 @@ $stmt->execute([$organizer_id, $title, $artist_name, $descr, $date, $loc]);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Add Event</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+    <link href="/ctis256_proje/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Main CSS -->
+    <link href="../css/main.css" rel="stylesheet">
 </head>
+
 <body>
 <!-- test -->
     <h2>Add New Event</h2>

@@ -31,7 +31,7 @@ $stmt->store_result();
             }
         
             if ($role === "organizer") {
-                header("Location: ../../indexd.php");
+                header("Location: ../../index.php");
                 exit;
             }
 
