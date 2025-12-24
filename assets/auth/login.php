@@ -31,7 +31,7 @@ $stmt->store_result();
             }
         
             if ($role === "organizer") {
-                header("Location: ../../indexd.php");
+                header("Location: ../../index.php");
                 exit;
             }
 
@@ -93,7 +93,18 @@ $stmt->store_result();
       <?php endif; ?>
 
     </form>
+    <p class="text-center mt-3">
+  Don’t have an account?
+  <a href="register.php" >
+    Register
+  </a>
+</p>
+
+
+
+
   </div>
+  
 </section>
 
 </body>
