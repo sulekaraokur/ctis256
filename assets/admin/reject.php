@@ -26,4 +26,3 @@ $from = $_GET["from"] ?? "pending";
 header("Location: waiting_list.php?status=" . $from);
 exit;
 
-exit;

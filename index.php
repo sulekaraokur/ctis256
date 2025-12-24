@@ -1,49 +1,66 @@
 <?php
+// Hataları gösterelim (Geliştirme aşamasında)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-?>
-<?php
+
 session_start();
-require_once "assets/includes/db.php";
+
+// Veritabanı dosyasının yolunu kontrol et. 
+// Klasör yapına göre: assets -> includes -> db.php (veya backend/includes)
+require_once "assets/includes/db.php"; 
 
 /**
- * Simple search for approved events (guest + user can view)
- * Searches: title, artist_name, location, date
+ * Onaylı (approved) etkinlikleri listeleme ve arama
+ * Arama alanları: Başlık, Sanatçı, Konum, Tarih
  */
 $q = trim($_GET['q'] ?? '');
 
-// Build query
+// Temel Sorgu (MySQLi)
 $sql = "SELECT event_id, title, artist_name, `desc`, date, location, image
         FROM events
         WHERE status = 'approved'";
 
-$params = [];
-
+// Arama varsa sorguya ekle
 if ($q !== '') {
-    // if user typed a date like 2025-12-01, this also matches via LIKE
+    // DATE_FORMAT ile tarih araması da yapılabilir (Örn: 2025-05)
     $sql .= " AND (
                 title LIKE ?
                 OR artist_name LIKE ?
                 OR location LIKE ?
                 OR DATE_FORMAT(date, '%Y-%m-%d') LIKE ?
              )";
-    $like = "%$q%";
-    $params = [$like, $like, $like, $like];
 }
 
 $sql .= " ORDER BY date ASC";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Sorguyu Hazırla
+$stmt = $conn->prepare($sql);
 
-// Helper
+if ($q !== '') {
+    // Parametreleri bağla (s = string)
+    // 4 tane soru işareti olduğu için "ssss" kullanıyoruz
+    $like = "%$q%";
+    $stmt->bind_param("ssss", $like, $like, $like, $like);
+}
+
+// Çalıştır
+$stmt->execute();
+
+// Sonuçları al
+$result = $stmt->get_result();
+
+$events = [];
+while ($row = $result->fetch_assoc()) {
+    $events[] = $row;
+}
+
+// XSS Koruması için yardımcı fonksiyon
 function e($str) {
     return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
 }
 
-// Role helpers
+// Rol kontrolleri
 $isLoggedIn = isset($_SESSION['user_id']);
 $role = $_SESSION['role'] ?? 'guest';
 ?>
@@ -53,9 +70,7 @@ $role = $_SESSION['role'] ?? 'guest';
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Concert & Event Tracking</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
-
+  
   <!-- Favicons -->
   <link href="assets/img/favicon.png" rel="icon">
   <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
@@ -63,7 +78,7 @@ $role = $_SESSION['role'] ?? 'guest';
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
   <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -82,8 +97,9 @@ $role = $_SESSION['role'] ?? 'guest';
   <div class="container-fluid container-xl position-relative d-flex align-items-center">
 
     <a href="index.php" class="logo d-flex align-items-center me-auto">
-      <img src="assets/img/logo.png" alt="">
-      <!-- <h1 class="sitename">Concert Tracker</h1> -->
+      <!-- Logo resmi varsa buraya koy -->
+      <!-- <img src="assets/img/logo.png" alt=""> -->
+      <h1 class="sitename">ConcertApp</h1>
     </a>
 
     <nav id="navmenu" class="navmenu">
@@ -99,7 +115,7 @@ $role = $_SESSION['role'] ?? 'guest';
           <?php if ($role === 'admin'): ?>
             <li><a href="assets/admin/dashboard.php">Admin Panel</a></li>
           <?php elseif ($role === 'organizer'): ?>
-            <li><a href="assets/backend/organizer/my_events.php">Organizer Panel</a></li>
+            <li><a href="assets/organizer/my_events.php">Organizer Panel</a></li>
           <?php else: ?>
             <!-- Normal user -->
             <li><a href="assets/backend/user/my_registrations.php">My Registrations</a></li>
@@ -118,6 +134,7 @@ $role = $_SESSION['role'] ?? 'guest';
 
   <!-- Hero Section -->
   <section id="hero" class="hero section dark-background">
+    <!-- Arkaplan resmi yolunu kontrol et -->
     <img src="assets/img/hero-bg.jpg" alt="" data-aos="fade-in">
 
     <div class="container d-flex flex-column align-items-center text-center mt-auto">
@@ -143,7 +160,7 @@ $role = $_SESSION['role'] ?? 'guest';
 
     <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-      <!-- Search -->
+      <!-- Search Form -->
       <form class="row g-2 mb-4" method="get" action="#events">
         <div class="col-md-10">
           <input
@@ -155,28 +172,39 @@ $role = $_SESSION['role'] ?? 'guest';
           >
         </div>
         <div class="col-md-2 d-grid">
-          <button class="btn btn-primary" type="submit">
+          <button class="btn btn-primary" type="submit" style="background-color: var(--accent-color); border:none;">
             <i class="bi bi-search"></i> Search
           </button>
         </div>
+        <?php if($q !== ''): ?>
+            <div class="col-12 text-center mt-2">
+                <a href="index.php#events" class="text-secondary">Clear Search</a>
+            </div>
+        <?php endif; ?>
       </form>
 
       <?php if (count($events) === 0): ?>
-        <div class="alert alert-warning">
+        <div class="alert alert-warning text-center">
           No approved events found<?= $q !== '' ? " for: <b>" . e($q) . "</b>" : "" ?>.
         </div>
       <?php else: ?>
         <div class="row gy-4">
           <?php foreach ($events as $ev): ?>
             <?php
-              $img = $ev['image'] ? e($ev['image']) : "assets/img/event-gallery/event-gallery-1.jpg";
+              // Resim yolunu ayarla. Veritabanında sadece "dosya.jpg" yazar, başına "uploads/" eklemeliyiz.
+              if (!empty($ev['image'])) {
+                  $img = "uploads/" . e($ev['image']);
+              } else {
+                  // Varsayılan resim
+                  $img = "assets/img/event-gallery/event-gallery-1.jpg";
+              }
             ?>
             <div class="col-lg-4 col-md-6">
-              <div class="card h-100 shadow-sm">
+              <div class="card h-100 shadow-sm border-0">
                 <img src="<?= $img ?>" class="card-img-top" alt="Event poster" style="height:220px; object-fit:cover;">
                 <div class="card-body d-flex flex-column">
-                  <h5 class="card-title mb-1"><?= e($ev['title']) ?></h5>
-                  <div class="text-muted mb-2"><?= e($ev['artist_name']) ?></div>
+                  <h5 class="card-title fw-bold mb-1"><?= e($ev['title']) ?></h5>
+                  <div class="text-muted mb-2"><i class="bi bi-mic"></i> <?= e($ev['artist_name']) ?></div>
 
                   <div class="small mb-1">
                     <i class="bi bi-calendar-event"></i>
@@ -188,26 +216,47 @@ $role = $_SESSION['role'] ?? 'guest';
                     <?= e($ev['location']) ?>
                   </div>
 
-                  <p class="card-text" style="flex:1;">
-                    <?= e(mb_strimwidth((string)$ev['desc'], 0, 140, "...")) ?>
+                  <p class="card-text text-secondary" style="flex:1;">
+                    <?= e(mb_strimwidth((string)$ev['desc'], 0, 100, "...")) ?>
                   </p>
 
-                  <div class="d-flex gap-2">
+                  <div class="d-flex gap-2 mt-auto">
                     
-                    <a class="btn btn-outline-primary btn-sm"
+                    <!-- Detay Sayfası -->
+                    <!-- <a class="btn btn-outline-primary btn-sm w-50"
                        href="assets/backend/guest/event_details.php?id=<?= (int)$ev['event_id'] ?>">
                       Details
-                    </a>
+                    </a> -->
 
+                    <!-- Kayıt / Join Butonu -->
                     <?php if ($isLoggedIn && $role === 'user'): ?>
-                      <a class="btn btn-primary btn-sm"
-                         href="assets/backend/user/register_event.php?id=<?= (int)$ev['event_id'] ?>">
-                        Register
-                      </a>
-                    <?php else: ?>
-                      <a class="btn btn-secondary btn-sm"
+                        <!-- Join/Cancel Toggle işlemi -->
+                        <?php
+                            // Kullanıcı kayıtlı mı kontrolü (Basit join kontrolü)
+                            // Not: Burada performans için sorguyu optimize edebiliriz ama şimdilik döngü içi kontrol yeterli
+                            $eid = (int)$ev['event_id'];
+                            $uid = (int)$_SESSION['user_id'];
+                            $check = $conn->query("SELECT * FROM registrations WHERE user_id=$uid AND event_id=$eid");
+                            $isJoined = $check->num_rows > 0;
+                        ?>
+
+                        <?php if($isJoined): ?>
+                             <a class="btn btn-outline-danger btn-sm w-100"
+                                href="toggle_join.php?id=<?= $eid ?>&action=cancel">
+                                Cancel
+                             </a>
+                        <?php else: ?>
+                             <a class="btn btn-primary btn-sm w-100"
+                                style="background-color: var(--accent-color); border:none;"
+                                href="toggle_join.php?id=<?= $eid ?>&action=join">
+                                Join Event
+                             </a>
+                        <?php endif; ?>
+
+                    <?php elseif (!$isLoggedIn): ?>
+                      <a class="btn btn-secondary btn-sm w-100"
                          href="assets/auth/login.php">
-                        Login to Register
+                        Login to Join
                       </a>
                     <?php endif; ?>
                   </div>
@@ -245,7 +294,7 @@ $role = $_SESSION['role'] ?? 'guest';
           <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="300">
             <i class="bi bi-telephone"></i>
             <h3>Phone</h3>
-            <p>+90 (___) ___ __ __</p>
+            <p>+90 (555) 123 45 67</p>
           </div>
         </div>
 
@@ -269,10 +318,7 @@ $role = $_SESSION['role'] ?? 'guest';
     <div class="container d-flex flex-column flex-lg-row justify-content-center justify-content-lg-between align-items-center">
       <div class="d-flex flex-column align-items-center align-items-lg-start">
         <div>
-          © <strong><span>Concert & Event Tracking</span></strong>. All Rights Reserved
-        </div>
-        <div class="credits">
-          Template by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+          © <strong><span>ConcertApp</span></strong>. All Rights Reserved
         </div>
       </div>
       <div class="social-links order-first order-lg-last mb-3 mb-lg-0">
@@ -288,11 +334,11 @@ $role = $_SESSION['role'] ?? 'guest';
   <i class="bi bi-arrow-up-short"></i>
 </a>
 
+<!-- Preloader -->
 <div id="preloader"></div>
 
 <!-- Vendor JS Files -->
 <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="assets/vendor/php-email-form/validate.js"></script>
 <script src="assets/vendor/aos/aos.js"></script>
 <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
 <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>

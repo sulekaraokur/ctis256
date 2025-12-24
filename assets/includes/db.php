@@ -1,16 +1,19 @@
 <?php
-$host = "localhost";
-$dbname = "concert_db";
-$user = "root";
-$pass = "";
+// includes/db.php
 
-try {
-    $pdo = new PDO(
-        "mysql:host=$host;dbname=$dbname;charset=utf8",
-        $user,
-        $pass
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("DB ERROR: " . $e->getMessage());
+$servername = "localhost";
+$username   = "root";     // Kendi kullanıcı adın
+$password   = "";         // Kendi şifren
+$dbname     = "concert_db"; // Veritabanı adın
+
+// MySQLi Bağlantısı Oluşturma
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Bağlantı Kontrolü
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+
+// Türkçe karakter sorunu olmaması için
+$conn->set_charset("utf8mb4");
+?>

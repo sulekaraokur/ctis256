@@ -1,98 +1,189 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+session_start();
+ini_set('display_errors', 1); error_reporting(E_ALL);
 
-require_once "../includes/db.php";
+// DB Bağlantısı
+require_once "../includes/db.php"; 
 
-$organizer_id = 1;
-
-$errors = [];
+// Giriş Kontrolü
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../auth/login.php");
+    exit;
+}
+$organizer_id = $_SESSION['user_id'];
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$errors = []; 
 $msg = "";
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-if ($id <= 0) {
-    die("Invalid event id.");
-}
-
+// 1. Mevcut Veriyi Çek (Veritabanı sütununun 'image' olduğuna dikkat et)
 $sql = "SELECT * FROM events WHERE event_id = ? AND organizer_id = ?";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$id, $organizer_id]);
-$event = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $id, $organizer_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$event = $result->fetch_assoc();
 
 if (!$event) {
-    die("Event not found or you don't have permission.");
+    die("Event not found or access denied.");
 }
 
+// Form Gönderildiğinde
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = trim($_POST['title'] ?? '');
-    $artist_name = trim($_POST['artist_name'] ?? '');
-    $descr = trim($_POST['descr'] ?? '');
-    $date = trim($_POST['date'] ?? '');
-    $loc = trim($_POST['loc'] ?? '');
-
-    if ($title === '' || $artist_name === '' || $descr === '' || $date === '' || $loc === '') {
-        $errors[] = "Please fill in all the required fields.";
+    $title = trim($_POST['title']);
+    $artist_name = trim($_POST['artist_name']);
+    $descr = trim($_POST['descr']);
+    $date = trim($_POST['date']);
+    $loc = trim($_POST['loc']);
+    
+    // Varsayılan olarak eski resim kalsın
+    $image_filename = $event['image']; 
+    
+    // Yeni resim yüklendi mi?
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        
+        if (in_array($ext, $allowed)) {
+            $newFilename = uniqid("evt_", true) . "." . $ext;
+            $uploadDir = "../../uploads/";
+            
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $newFilename)) {
+                // Başarılı yükleme, yeni ismi kaydet
+                $image_filename = $newFilename;
+                
+                // İsteğe bağlı: Eski resmi klasörden silebiliriz (Çöp birikmesin)
+                if ($event['image'] && file_exists($uploadDir . $event['image'])) {
+                    unlink($uploadDir . $event['image']);
+                }
+            }
+        } else {
+            $errors[] = "Invalid file type.";
+        }
     }
 
-    if (!$errors) {
-        try {
-            $updateSql = "UPDATE events
-                         SET title = ?, artist_name = ?, `desc` = ?, date = ?, location = ?, updated_at = NOW()
-                         WHERE event_id = ? AND organizer_id = ?";
-            $up = $pdo->prepare($updateSql);
-            $up->execute([$title, $artist_name, $descr, $date, $loc, $id, $organizer_id]);
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([$id, $organizer_id]);
-            $event = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    if (empty($errors)) {
+        // Güncelleme Sorgusu (Sütun adı: image)
+        $upSql = "UPDATE events 
+                  SET title=?, artist_name=?, `desc`=?, date=?, location=?, image=?, updated_at=NOW() 
+                  WHERE event_id=? AND organizer_id=?";
+        
+        $upStmt = $conn->prepare($upSql);
+        // ssssssii -> string x 6, int x 2
+        $upStmt->bind_param("ssssssii", $title, $artist_name, $descr, $date, $loc, $image_filename, $id, $organizer_id);
+        
+        if ($upStmt->execute()) {
             header("Location: my_events.php?updated=1");
             exit;
-
-        } catch (Exception $ex) {
-            $errors[] = "DB error: " . $ex->getMessage();
+        } else {
+            $errors[] = "Update failed: " . $conn->error;
         }
-    } else {
-        $event['title'] = $title;
-        $event['artist_name'] = $artist_name;
-        $event['desc'] = $descr;
-        $event['date'] = $date;
-        $event['location'] = $loc;
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Edit Event</title>
+    <!-- CSS Yolları -->
+    <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="../css/main.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .img-preview { max-width: 150px; border-radius: 8px; border: 1px solid #ddd; padding: 3px; }
+    </style>
 </head>
 <body>
-    <h2>Edit Event</h2>
 
-    <?php foreach ($errors as $e): ?>
-        <p style="color:red;"><?= htmlspecialchars($e) ?></p>
-    <?php endforeach; ?>
+    <header class="p-3 mb-4 border-bottom bg-white shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h3 class="m-0 text-dark">Organizer Panel</h3>
+            <a href="my_events.php" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Cancel Edit
+            </a>
+        </div>
+    </header>
 
-    <form action="" method="post">
-        <label>Event Title:</label><br>
-        <input type="text" name="title" value="<?= htmlspecialchars($event['title'] ?? '') ?>" required><br><br>
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">Edit Event</h2>
+                    <p class="text-muted">Update event details.</p>
+                </div>
 
-        <label>Artist Name:</label><br>
-        <input type="text" name="artist_name" value="<?= htmlspecialchars($event['artist_name'] ?? '') ?>" required><br><br>
+                <?php if(!empty($errors)): ?>
+                    <div class="alert alert-danger">
+                        <?php foreach($errors as $e) echo "<div>$e</div>"; ?>
+                    </div>
+                <?php endif; ?>
 
-        <label>Description:</label><br>
-        <textarea name="descr" required><?= htmlspecialchars($event['desc'] ?? '') ?></textarea><br><br>
+                <div class="card shadow-sm mb-5">
+                    <div class="card-body p-4 p-md-5">
+                        
+                        <form action="" method="post" enctype="multipart/form-data">
+                            <div class="row g-3">
+                                
+                                <div class="col-md-12">
+                                    <label class="form-label">Event Title</label>
+                                    <input type="text" class="form-control" name="title" value="<?= htmlspecialchars($event['title']) ?>" required>
+                                </div>
 
-        <label>Date:</label><br>
-        <input type="date" name="date" value="<?= htmlspecialchars($event['date'] ?? '') ?>" required><br><br>
+                                <div class="col-md-6">
+                                    <label class="form-label">Artist Name</label>
+                                    <input type="text" class="form-control" name="artist_name" value="<?= htmlspecialchars($event['artist_name']) ?>" required>
+                                </div>
 
-        <label>Location:</label><br>
-        <input type="text" name="loc" value="<?= htmlspecialchars($event['location'] ?? '') ?>" required><br><br>
+                                <div class="col-md-6">
+                                    <label class="form-label">Event Date</label>
+                                    <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($event['date']) ?>" required>
+                                </div>
 
-        <button type="submit">Update</button>
-        <a href="my_events.php">Cancel</a>
-    </form>
+                                <div class="col-md-12">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" name="loc" value="<?= htmlspecialchars($event['location']) ?>" required>
+                                </div>
+
+                                <!-- Resim Bölümü -->
+                                <div class="col-md-12">
+                                    <label class="form-label">Current Image</label><br>
+                                    <?php if($event['image']): ?>
+                                        <img src="../../uploads/<?= htmlspecialchars($event['image']) ?>" class="img-preview mb-2">
+                                    <?php else: ?>
+                                        <span class="text-muted fst-italic">No image uploaded.</span>
+                                    <?php endif; ?>
+                                    
+                                    <div class="mt-2">
+                                        <label class="form-label small text-muted">Change Image (Optional)</label>
+                                        <input type="file" class="form-control" name="image" accept="image/*">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" name="descr" rows="5" required><?= htmlspecialchars($event['desc']) ?></textarea>
+                                </div>
+
+                                <div class="col-12 mt-4 d-flex justify-content-between">
+                                    <a href="my_events.php" class="btn btn-light text-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                                        Update Event
+                                    </button>
+                                </div>
+
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

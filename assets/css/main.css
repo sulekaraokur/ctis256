@@ -1688,3 +1688,80 @@ section,
 .starter-section {
   /* Add your styles here */
 }
+/* =========================================
+   ORGANIZER PANEL STILLERI (main.css'e Eklenecek)
+   ========================================= */
+
+/* Tablo Tasarımı (my_events.php) */
+.organizer-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin: 30px 0;
+    box-shadow: 0 0 20px rgba(0,0,0,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.organizer-table th, 
+.organizer-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.organizer-table th {
+    background-color: #373737;
+    color: #fff;
+}
+
+.organizer-table tr:hover {
+    background-color: #f8f8f8;
+}
+
+/* Form Kutusu (add_event.php & edit_event.php) */
+.organizer-form-container {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.08);
+    max-width: 700px;
+    margin: 30px auto;
+}
+
+.organizer-form-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.organizer-form-container input,
+.organizer-form-container textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box; /* Önemli */
+}
+
+/* Buton */
+.btn-submit {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+}
+
+/* Durum Renkleri */
+.status-approved { color: #28a745; font-weight: bold; }
+.status-pending { color: #fd7e14; font-weight: bold; }
+.status-rejected { color: #dc3545; font-weight: bold; }
+
+/* Mesajlar */
+.msg-success { color: #155724; background: #d4edda; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+.msg-error { color: #721c24; background: #f8d7da; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
