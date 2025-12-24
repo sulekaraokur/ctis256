@@ -60,9 +60,9 @@ include "assets/includes/db.php";
           <li><a href="assets/auth/register.php">Register</a></li>
           <?php else: ?>
             <?php if ($_SESSION['role'] === 'admin'): ?>
-        <li><a href="admin/dashboard.php">Admin Panel</a></li>
+        <li><a href="assets/admin/dashboard.php">Admin Panel</a></li>
         <?php elseif ($_SESSION['role'] === 'organizer'): ?>
-        <li><a href="organizer/dashboard.php">Organizer Panel</a></li>
+        <li><a href="assets/organizer/dashboard.php">Organizer Panel</a></li>
       <?php endif; ?>
        <li><a href="assets/auth/logout.php">Logout</a></li>
         <?php endif; ?>
