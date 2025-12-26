@@ -3,7 +3,7 @@
 
 $servername = "localhost";
 $username   = "root";     // Kendi kullanıcı adın
-$password   = "";         // Kendi şifren
+$password   = "root";         // Kendi şifren
 $dbname     = "concert_db"; // Veritabanı adın
 
 // MySQLi Bağlantısı Oluşturma
