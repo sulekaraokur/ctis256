@@ -15,7 +15,7 @@ $event = $result->fetch_assoc();
 
 if (!$event) die("Event not found or access denied.");
 
-$sql = "SELECT u.full_name, u.email, r.registered_at 
+$sql = "SELECT u.username AS display_name, u.email, r.registered_at
         FROM registrations r
         JOIN users u ON r.user_id = u.user_id
         WHERE r.event_id = ?
@@ -51,10 +51,10 @@ while($row = $result->fetch_assoc()) {
                     <div class="card-body">
                         <h5 class="card-title">Registered Users (<?= count($attendees) ?>)</h5>
                         <table class="table table-hover mt-3">
-                            <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Date</th></tr></thead>
+                            <thead><tr><th>#</th><th>Display Name</th><th>Email</th><th>Date</th></tr></thead>
                             <tbody>
                                 <?php $i=1; foreach($attendees as $p): ?>
-                                <tr><td><?= $i++ ?></td><td><?= htmlspecialchars($p['full_name']) ?></td><td><?= htmlspecialchars($p['email']) ?></td><td><?= $p['registered_at'] ?></td></tr>
+                                <tr><td><?= $i++ ?></td><td><?= htmlspecialchars($p['display_name']) ?></td><td><?= htmlspecialchars($p['email']) ?></td><td><?= $p['registered_at'] ?></td></tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>

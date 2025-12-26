@@ -118,7 +118,7 @@ $role = $_SESSION['role'] ?? 'guest';
             <li><a href="assets/organizer/my_events.php">Organizer Panel</a></li>
           <?php else: ?>
             <!-- Normal user -->
-            <li><a href="assets/backend/user/my_registrations.php">My Registrations</a></li>
+            <li><a href="assets/user/my_registrations.php">My Registrations</a></li>
           <?php endif; ?>
           <li><a href="assets/auth/logout.php">Logout</a></li>
         <?php endif; ?>
