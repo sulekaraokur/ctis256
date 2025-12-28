@@ -1,22 +1,24 @@
 <?php
 session_start();
-// Hata raporlamayı aç
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Veritabanı yoluna dikkat et! (Senin dosya yapına göre ayarladım)
 require_once "../includes/db.php"; 
 
 $error = "";
+$entered_email = ""; // Sticky form için değişken
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    // Projende 'username' sütunu yok, 'email' var. O yüzden email kullanıyoruz.
-    $email = trim($_POST["username"] ?? ""); // Formda name="username" kalsa bile biz bunu email olarak alalım
+    $email = trim($_POST["username"] ?? ""); 
     $password = trim($_POST["password"] ?? "");
+    
+    // Sticky form: Hata olsa bile email kutuda kalsın diye değişkene atıyoruz
+    $entered_email = $email;
 
-    // SQL Sorgusu (email'e göre arama)
-    $sql = "SELECT user_id, password, role FROM users WHERE email = ?";
+    // SORGUMUZU GÜNCELLİYORUZ: is_approved sütununu da çekiyoruz!
+    // EĞER VERİTABANINDA BU SÜTUNUN ADI FARKLIYSA (örn: approved, status) BURAYI DÜZELT!
+    $sql = "SELECT user_id, password, role, is_approved FROM users WHERE email = ?";
     
     if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param("s", $email);
@@ -24,32 +26,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->store_result();
 
         if ($stmt->num_rows === 1) {
-            // IDE hatasını önlemek için değişkenleri başta tanımlayalım
             $id = 0;
             $hashed = "";
             $role = "";
+            $is_approved = 0; // Varsayılan değer
 
-            // Değişkenleri eşleştir
-            $stmt->bind_result($id, $hashed, $role);
+            // Sonuçları değişkenlere bağla
+            $stmt->bind_result($id, $hashed, $role, $is_approved);
             $stmt->fetch();
 
-            // Şifre Kontrolü
             if (password_verify($password, $hashed)) {
-                // Giriş Başarılı
-                $_SESSION["user_id"] = $id;
-                $_SESSION["role"] = $role;
-                $_SESSION["username"] = $email; // İsim olarak emaili saklayalım
+                
+                // --- KRİTİK KONTROL BAŞLIYOR ---
+                // Eğer kullanıcı Organizatör ise VE onayı yoksa (0 ise)
+                if ($role === 'organizer' && $is_approved == 0) {
+                    $error = "Hesabınız henüz Admin tarafından onaylanmadı. Lütfen bekleyiniz.";
+                } 
+                else {
+                    // Giriş Başarılı (Admin, Normal User veya Onaylı Organizatör)
+                    $_SESSION["user_id"] = $id;
+                    $_SESSION["role"] = $role;
+                    $_SESSION["username"] = $email;
 
-                // Yönlendirmeler
-                if ($role === "admin") {
-                    header("Location: ../../assets/admin/dashboard.php"); 
-                } elseif ($role === "organizer") {
-                    header("Location: ../../assets/organizer/my_events.php");
-                } else {
-                    // Normal user
-                    header("Location: ../../index.php");
+                    if ($role === "admin") {
+                        header("Location: ../../assets/admin/dashboard.php"); 
+                    } elseif ($role === "organizer") {
+                        header("Location: ../../assets/organizer/my_events.php");
+                    } else {
+                        header("Location: ../../index.php");
+                    }
+                    exit;
                 }
-                exit;
+                // --- KONTROL BİTTİ ---
 
             } else {
                 $error = "Hatalı şifre!";
@@ -70,7 +78,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <!-- CSS Dosyaları -->
     <link href="../../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../assets/css/main.css" rel="stylesheet">
 </head>
@@ -86,7 +93,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               <p class="text-muted">Sign in to your account</p>
             </div>
 
-            <!-- Form -->
             <form method="POST" class="php-email-form">
 
               <?php if (!empty($error)): ?>
@@ -97,8 +103,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
               <div class="mb-3">
                 <label class="form-label">Email</label>
-                <!-- Veritabanında email olduğu için type="email" yaptık -->
-                <input type="email" name="username" class="form-control" placeholder="name@example.com" required>
+                <!-- STICKY FORM GÜNCELLEMESİ: value kısmına bak -->
+                <input type="email" name="username" class="form-control" 
+                       placeholder="name@example.com" required 
+                       value="<?= htmlspecialchars($entered_email) ?>">
               </div>
 
               <div class="mb-3">
