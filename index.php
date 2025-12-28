@@ -1,9 +1,17 @@
 <?php
+
+//Bu sayfa admin tarafından onaylanmış etkinlikleri listeler, 
+//arama yapılmasına izin verir 
+//ve kullanıcı giriş durumuna göre join/cancel işlemlerini yönetir.
+
+
 // Hataları gösterelim (Geliştirme aşamasında)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
+// Session başlatılıyor (login / role bilgileri için)
 session_start();
 
 // Veritabanı dosyasının yolunu kontrol et. 
@@ -14,14 +22,18 @@ require_once "assets/includes/db.php";
  * Onaylı (approved) etkinlikleri listeleme ve arama
  * Arama alanları: Başlık, Sanatçı, Konum, Tarih
  */
+// URL üzerinden gelen arama kelimesi
+// trim ile baştaki/sondaki boşlukları temizliyoruz
 $q = trim($_GET['q'] ?? '');
 
-// Temel Sorgu (MySQLi)
+
+
+// Sadece admin tarafından onaylanmış (approved) etkinlikler listelenir
 $sql = "SELECT event_id, title, artist_name, `desc`, date, location, image
         FROM events
         WHERE status = 'approved'";
 
-// Arama varsa sorguya ekle
+// Kullanıcı arama yaptıysa başlık, sanatçı, konum veya tarihe göre filtreleme yapılır
 if ($q !== '') {
     // DATE_FORMAT ile tarih araması da yapılabilir (Örn: 2025-05)
     $sql .= " AND (
@@ -32,9 +44,12 @@ if ($q !== '') {
              )";
 }
 
+// Etkinlikler tarihe göre artan sırada listelenir (yaklaşan etkinlikler üstte)
+
 $sql .= " ORDER BY date ASC";
 
 // Sorguyu Hazırla
+// SQL Injection riskini önlemek için prepared statement kullanıyoruz
 $stmt = $conn->prepare($sql);
 
 if ($q !== '') {
@@ -60,8 +75,12 @@ function e($str) {
     return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
 }
 
-// Rol kontrolleri
+
+// Kullanıcı giriş yapmış mı?
+
 $isLoggedIn = isset($_SESSION['user_id']);
+
+// Kullanıcının rolü (admin / organizer / user / guest)
 $role = $_SESSION['role'] ?? 'guest';
 ?>
 <!DOCTYPE html>
