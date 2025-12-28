@@ -7,7 +7,11 @@ $status = 'approved';
 
 $events = [];
 
-if ($stmt = $conn->prepare("SELECT event_id, title, artist_name, `date`, location, status, image FROM events WHERE status = ? ORDER BY `date` ASC")) {
+if ($stmt = $conn->prepare("SELECT event_id, title, artist_name, `date`, 
+    location, status, image 
+    FROM events WHERE status = ? 
+    ORDER BY `date` ASC")) 
+    {
     $stmt->bind_param('s', $status);
     $stmt->execute();
     $result = $stmt->get_result();

@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
-    header("Location: /ctis256_proje/auth/login.php");
+    header("Location: ../auth/login.php");
     exit;
 }
 ?>
@@ -15,7 +15,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link href="/ctis256_proje/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/main.css" rel="stylesheet">
 </head>
 <section class="section">
@@ -32,7 +32,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
                 <div class="card text-center p-4">
                     <h5>Organizer Requests</h5>
                     <p>Users waiting for approval</p>
-                    <a href="waiting_list.php" class="btn btn-danger">
+                    <a href="waiting_list.php" class="btn btn-outline-danger">
                         View Requests
                     </a>
                 </div>
@@ -42,8 +42,8 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
                 <div class="card text-center p-4">
                     <h5>All Users</h5>
                     <p>View registered users</p>
-                    <a href="#" class="btn btn-outline-danger">
-                        Coming soon
+                    <a href="all_users.php" class="btn btn-outline-danger">
+                        View Users
                     </a>
                 </div>
             </div>
@@ -52,7 +52,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
                 <div class="card text-center p-4">
                     <h5>Events</h5>
                     <p>Manage events</p>
-                    <a href="#" class="btn btn-outline-danger">
+                    <a href="all_events.php" class="btn btn-outline-danger">
                         Coming soon
                     </a>
                 </div>
@@ -61,7 +61,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
         </div>
 
         <div class="text-center mt-4">
-            <a href="/ctis256_proje/index.php" class="btn btn-secondary">
+            <a href="../../index.php" class="btn btn-secondary">
                 Back to Home
             </a>
         </div>
