@@ -98,7 +98,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               <div class="mb-3">
                 <label class="form-label">Email</label>
                 <!-- Veritabanında email olduğu için type="email" yaptık -->
-                <input type="email" name="username" class="form-control" placeholder="name@example.com" required>
+                 <!-- sticky form -->
+                <input 
+                  type="email" 
+                  name="username" 
+                  class="form-control" 
+                  placeholder="name@example.com"
+                  value="<?= htmlspecialchars($email ?? '') ?>"
+                   required
+                  >
               </div>
 
               <div class="mb-3">
