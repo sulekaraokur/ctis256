@@ -1,5 +1,5 @@
 <?php
-//usersları listeler
+//userları listeler
 //admin paneli için
 
 session_start();
