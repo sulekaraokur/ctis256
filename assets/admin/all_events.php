@@ -1,17 +1,26 @@
 <?php
+//Herkesi / her eventi görür
+//Status’üne bakmaksızın listeler
+//Yönetim amaçlı
+
 session_start();
 require_once __DIR__ . '/../includes/db.php';
 
+// Admin olmayan kullanıcıların bu sayfaya erişmesini engelliyoruz
+// Yetkisiz erişim varsa ana sayfaya yönlendiriyoruz
 if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
     header("Location: /ctis256_proje/index.php");
     exit;
 }
 
-// Filters (view only)
+// URL üzerinden gelen status filtresi (all, pending, approved, rejected)
+// Varsayılan olarak tüm eventleri gösteriyoruz
 $status    = $_GET['status'] ?? 'all';
 $allowed   = ['pending', 'approved', 'rejected'];
 $hasFilter = in_array($status, $allowed, true);
 
+// Event bilgilerini ve organizer kullanıcı adını birlikte çekiyoruz
+// LEFT JOIN kullanmamızın sebebi organizer silinse bile eventin listelenebilmesi
 $sql = "
     SELECT 
         e.event_id,
@@ -23,35 +32,29 @@ $sql = "
     LEFT JOIN users u ON e.organizer_id = u.user_id
 ";
 
+// Eğer geçerli bir filtre seçildiyse sorguya WHERE koşulu ekleniyor
+
 if ($hasFilter) {
     $sql .= " WHERE e.status = ? ";
 }
 
+// En yeni eventler üstte görünsün diye tarihe göre sıralıyoruz
 $sql .= " ORDER BY e.date DESC";
 
+// Prepared statement kullanarak SQL Injection riskini önlüyoruz
 $stmt = $conn->prepare($sql);
+
+// Filtre varsa parametreyi güvenli şekilde bağlıyoruz
 if ($hasFilter) {
     $stmt->bind_param("s", $status);
 }
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Sonuçları associative array olarak alıyoruz
 $events = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
-function e($value)
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
 
-function statusBadge(string $status): string
-{
-    if ($status === 'approved') {
-        return '<span class="badge bg-success-subtle text-success">Approved</span>';
-    }
-    if ($status === 'pending') {
-        return '<span class="badge bg-warning-subtle text-dark">Pending</span>';
-    }
-    return '<span class="badge bg-danger-subtle text-danger">Rejected</span>';
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,10 +108,10 @@ function statusBadge(string $status): string
                                 <?php foreach ($events as $index => $row): ?>
                                     <tr class="text-center">
                                         <th scope="row">#<?= (int) $row['event_id'] ?></th>
-                                        <td class="text-start"><?= e($row['title']) ?></td>
-                                        <td><?= e($row['date']) ?></td>
-                                        <td><?= e($row['organizer'] ?? 'Unknown') ?></td>
-                                        <td><?= statusBadge($row['status']) ?></td>
+                                        <td class="text-start"><?= $row['title'] ?></td>
+                                        <td><?= $row['date'] ?></td>
+                                        <td><?= $row['organizer'] ?? 'Unknown' ?></td>
+                                        <td><?= ($row['status']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

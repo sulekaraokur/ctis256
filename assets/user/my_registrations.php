@@ -1,29 +1,41 @@
 <?php
+//Giriş yapmış kullanıcının, kayıt olduğu eventleri görüntülemesi için
+//kullanılacak
+
 session_start();
 require_once "../includes/db.php";
 
+// Kullanıcı giriş yapmamışsa login sayfasına yönlendiriyoruz
+// Bu sayfa sadece giriş yapmış kullanıcılar için erişilebilir
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../auth/login.php");
     exit;
 }
 
+// Giriş yapan kullanıcının ID bilgisini session'dan alıyoruxz
 $userId = (int)$_SESSION['user_id'];
 
+// Kullanıcının kayıt olduğu eventleri çekmek için sorgu
+// registrations tablosu ile events tablosu JOIN edilerek
+// event bilgileri ve kayıt tarihi birlikte alınıyor
 $sql = "SELECT e.event_id, e.title, e.artist_name, e.date, e.location, r.registered_at
         FROM registrations r
         JOIN events e ON r.event_id = e.event_id
         WHERE r.user_id = ?
         ORDER BY e.date ASC, r.registered_at DESC";
 
+// Prepared statement kullanarak güvenli sorgu oluşturuyoruz
 $stmt = $conn->prepare($sql);
+// user_id integer olduğu için 'i' parametresi kullanılıyor
 $stmt->bind_param("i", $userId);
+// Sorguyu çalıştırıyoruz
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Sonuçları associative array olarak alıyoruz
 $registrations = $result->fetch_all(MYSQLI_ASSOC);
 
-function e($value) {
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,11 +92,11 @@ function e($value) {
                                 <?php $i = 1; foreach ($registrations as $reg): ?>
                                     <tr>
                                         <th scope="row"><?= $i++ ?></th>
-                                        <td class="fw-semibold"><?= e($reg['title']) ?></td>
-                                        <td><?= e($reg['artist_name']) ?></td>
-                                        <td><?= e(date('M d, Y', strtotime($reg['date']))) ?></td>
-                                        <td><?= e($reg['location']) ?></td>
-                                        <td><?= e(date('M d, Y H:i', strtotime($reg['registered_at']))) ?></td>
+                                        <td class="fw-semibold"><?= $reg['title'] ?></td>
+                                        <td><?= $reg['artist_name'] ?></td>
+                                        <td><?= date('M d, Y', strtotime($reg['date'])) ?></td>
+                                        <td><?= $reg['location'] ?></td>
+                                        <td><?= date('M d, Y H:i', strtotime($reg['registered_at'])) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
