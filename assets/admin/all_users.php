@@ -1,22 +1,28 @@
 <?php
+//usersları listeler
+//admin paneli için
+
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+
+// Sadece admin kullanıcıların bu sayfaya erişebilmesi için kontrol yapıyoruz
+// Yetkisiz erişim durumunda ana sayfaya yönlendirme yapılıyor
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: /ctis256_proje/index.php');
     exit;
 }
 
+// Sistemde kayıtlı tüm kullanıcıları listelemek için sorgu
+// created_at alanına göre sıralama yaparak en yeni kullanıcıları üstte gösteriyoruz
 $result = $conn->query(
     'SELECT username, email, role FROM users ORDER BY created_at DESC'
 );
 $users = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
-function e($value)
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
 
+// Kullanıcının rolüne göre ekranda gösterilecek badge'i döndüren yardımcı fonksiyon
+// UI mantığını HTML'den ayırmak için fonksiyon olarak tanımlandı
 function displayStatus(string $role): string
 {
     if ($role === 'admin') {
@@ -72,8 +78,8 @@ function displayStatus(string $role): string
                                 <?php foreach ($users as $index => $user): ?>
                                     <tr>
                                         <th scope="row"><?= $index + 1 ?></th>
-                                        <td><?= e($user['username']) ?></td>
-                                        <td><?= e($user['email']) ?></td>
+                                        <td><?= $user['username'] ?></td>
+                                        <td><?= $user['email']?></td>
                                         <td><?= displayStatus($user['role']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>

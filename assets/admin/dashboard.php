@@ -43,7 +43,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
                     <h5>All Users</h5>
                     <p>View registered users</p>
                     <a href="all_users.php" class="btn btn-outline-danger">
-                        View Users
+                        View All Users
                     </a>
                 </div>
             </div>
@@ -53,7 +53,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
                     <h5>Events</h5>
                     <p>Manage events</p>
                     <a href="all_events.php" class="btn btn-outline-danger">
-                        Coming soon
+                        View All Events
                     </a>
                 </div>
             </div>
