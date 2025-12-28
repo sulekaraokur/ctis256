@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . '/../includes/db.php';
 
 if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
-    header("Location: /ctis256_proje/index.php");
+    header("Location: ../../index.php");
     exit;
 }
 

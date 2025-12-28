@@ -20,12 +20,12 @@ if ($event_id > 0) {
         $checkStmt->bind_param("ii", $user_id, $event_id);
         $checkStmt->execute();
         $checkStmt->store_result();
-         if ($checkStmt->num_rows === 0) { {
+         if ($checkStmt->num_rows === 0) { 
             // Kayıt Ekle (MySQLi Prepared)
              $insertStmt = $conn->prepare("INSERT INTO registrations (user_id, event_id, registered_at) VALUES (?, ?, NOW())");
             $insertStmt->bind_param("ii", $user_id, $event_id);
             $insertStmt->execute();
-        }
+        
     } elseif ($action === 'cancel') {
         // Kaydı Sil (MySQLi Prepared)
        $stmt = $conn->prepare("DELETE FROM registrations WHERE user_id = ? AND event_id = ?");
@@ -37,4 +37,5 @@ if ($event_id > 0) {
 // İşlem bitince ana sayfaya geri dön
 header("Location: index.php");
 exit;
+}
 ?>

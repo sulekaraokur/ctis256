@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . '/../includes/db.php';
 
 if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
-    header("Location: /ctis256_proje/index.php");
+    header("Location: ../../index.php");
     exit;
 }
 
@@ -27,7 +27,7 @@ $result = $stmt->get_result();
 <html>
 <head>
   <title>Organizer Requests</title>
-  <link href="/ctis256_proje/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
