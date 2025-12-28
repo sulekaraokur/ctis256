@@ -15,7 +15,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
 
 // URL üzerinden gelen status filtresi (all, pending, approved, rejected)
 // Varsayılan olarak tüm eventleri gösteriyoruz
-$status    = $_GET['status'] ?? 'all';
+$status    = strtolower(trim($_GET['status'] ?? 'all'));
 $allowed   = ['pending', 'approved', 'rejected'];
 $hasFilter = in_array($status, $allowed, true);
 

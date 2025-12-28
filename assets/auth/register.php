@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 
 session_start();
 
-// Dosya yolu (Senin yapına göre assets/includes/db.php)
+// Dosya yolu
 require_once "../includes/db.php"; 
 
 $error = "";
@@ -55,6 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($is_organizer) {
                 $role = 'organizer';
                 $is_approved = 0; // Admin onayı bekleyecek
+             
             } else {
                 $role = 'user';
                 $is_approved = 1; // Direkt onaylı
@@ -62,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             // 2. Kayıt Ekleme (DÜZELTİLDİ: full_name yerine username yazıldı)
             $sql = "INSERT INTO users (username, email, password, role, is_approved) VALUES (?, ?, ?, ?, ?)";
-            
+             
             $stmt = $conn->prepare($sql);
             if (!$stmt) { 
                 // Eğer yine hata alırsan, sütun adlarını görmek için hatayı ekrana basar
@@ -71,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             // ssssi -> username(s), email(s), password(s), role(s), is_approved(i)
             $stmt->bind_param("ssssi", $username, $email, $hashed, $role, $is_approved);
-
+            
             if ($stmt->execute()) {
                 // Kayıt başarılı, login'e yönlendir
                 header("Location: login.php?registered=1");

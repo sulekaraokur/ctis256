@@ -1,4 +1,5 @@
 <?php
+//pending içindeki hata düzeltildi.
 session_start();
 require_once __DIR__ . '/../includes/db.php';
 
@@ -9,16 +10,27 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
 
 /* FILTER */
 $status = $_GET["status"] ?? "pending";
-$allowed = ["pending","approved","rejected"];
+$allowed = ["pending", "approved", "rejected"];
 if (!in_array($status, $allowed)) {
     $status = "pending";
 }
+//Organizer zaten kayıt sırasında belirleniyor
+//Admin’in burada yönettiği şey event onayı, kullanıcı rolü değil
+//Bu yüzden sorguda event status’una göre filtreleme yapıyoruz
+$stmt = $conn->prepare("
+    SELECT 
+        e.event_id,
+        e.title,
+        e.date,
+        e.status,
+        u.username,
+        u.email
+    FROM events e
+    JOIN users u ON e.organizer_id = u.user_id
+    WHERE e.status = ?
+    ORDER BY e.date DESC
+");
 
-$stmt = $conn->prepare(
-    "SELECT user_id, username, email, organizer_request
-     FROM users
-     WHERE organizer_request = ?"
-);
 $stmt->bind_param("s", $status);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -60,38 +72,49 @@ $result = $stmt->get_result();
   <table class="table table-bordered">
     <thead>
       <tr>
-        <th>Username</th>
-        <th>Email</th>
+        <th>Event</th>
+        <th>Date</th>
+        <th>Organizer</th>
         <th>Status</th>
         <th>Action</th>
       </tr>
     </thead>
     <tbody>
 
-    <?php while ($row = $result->fetch_assoc()): ?>
-      <tr>
-        <td><?= htmlspecialchars($row["username"]) ?></td>
-        <td><?= htmlspecialchars($row["email"]) ?></td>
-        <td><?= ucfirst($row["organizer_request"]) ?></td>
-        <td>
+ <?php while ($row = $result->fetch_assoc()): ?>
+<?php
+ // Veritabanındaki status değeri büyük/küçük harf veya boşluk içerebilir
+    // Karşılaştırmalarda hata olmaması için normalize edilir
+    $currentStatus = strtolower(trim($row["status"]));
+?>
+<tr>
+    <td><?= htmlspecialchars($row["title"]) ?></td>
+    <td><?= htmlspecialchars($row["date"]) ?></td>
+    <td><?= htmlspecialchars($row["username"]) ?></td>
+    <td><?= ucfirst($currentStatus) ?></td>
+    <td>
 
-          <?php if ($row["organizer_request"] !== "approved"): ?>
-            <a href="accept.php?id=<?= $row["user_id"] ?>"
-               class="btn btn-success btn-sm">
-               Approve
-            </a>
-          <?php endif; ?>
+        <?php if ($currentStatus === "pending"): ?>
+           <!-- Pending eventler için admin hem approve hem reject edebilir -->
+            <a href="accept.php?id=<?= $row["event_id"] ?>&from=<?= $status ?>"
+               class="btn btn-success btn-sm">Approve</a>
 
-          <?php if ($row["organizer_request"] !== "rejected"): ?>
-            <a href="reject.php?id=<?= $row["user_id"] ?>"
-               class="btn btn-danger btn-sm">
-               Reject
-            </a>
-          <?php endif; ?>
+            <a href="reject.php?id=<?= $row["event_id"] ?>&from=<?= $status ?>"
+               class="btn btn-danger btn-sm">Reject</a>
 
-        </td>
-      </tr>
-    <?php endwhile; ?>
+        <?php elseif ($currentStatus === "approved"): ?>
+            <a href="reject.php?id=<?= $row["event_id"] ?>&from=<?= $status ?>"
+               class="btn btn-danger btn-sm">Reject</a>
+
+        <?php elseif ($currentStatus === "rejected"): ?>
+            <a href="accept.php?id=<?= $row["event_id"] ?>&from=<?= $status ?>"
+               class="btn btn-success btn-sm">Approve</a>
+        <?php endif; ?>
+
+    </td>
+</tr>
+<?php endwhile; ?>
+
 
     </tbody>
   </table>

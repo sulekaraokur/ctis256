@@ -13,11 +13,11 @@ if (!$id) {
     exit;
 }
 
+//sql sorgusu düzeltilip event statusuna göre onaylama yapıldı.
 $stmt = $conn->prepare(
-    "UPDATE users
-     SET organizer_request = 'rejected',
-         role = 'user'
-     WHERE user_id = ?"
+   "UPDATE events 
+    SET status = 'rejected'
+    WHERE event_id = ?"
 );
 $stmt->bind_param("i", $id);
 $stmt->execute();

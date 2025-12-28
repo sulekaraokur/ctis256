@@ -13,11 +13,11 @@ if (!$id) {
     exit;
 }
 
+//sql sorgusu düzeltilip event statusuna göre onaylama yapıldı.
 $stmt = $conn->prepare(
-    "UPDATE users
-     SET organizer_request = 'approved',
-         role = 'organizer's
-     WHERE user_id = ?"
+    "UPDATE events 
+    SET status = 'approved'
+     WHERE event_id = ?"
 );
 $stmt->bind_param("i", $id);
 $stmt->execute();
